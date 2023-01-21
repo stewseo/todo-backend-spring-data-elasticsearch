@@ -1,0 +1,80 @@
+plugins {
+    id 'org.springframework.boot' version '2.7.4'
+    id 'io.spring.dependency-management' version '1.0.14.RELEASE'
+    id 'java-library'
+    id 'war'
+}
+
+group 'com.example'
+version '0.0.1-SNAPSHOT'
+
+apply plugin: 'war'
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+}
+
+bootWar {
+    destinationDirectory.set(file("$rootDir/libs"))
+    archiveBaseName.set('todo')
+    archiveVersion.set('0.0.1-SNAPSHOT')
+    manifest {
+        attributes 'Start-Class': 'com.example.TodoApplication'
+    }
+}
+
+repositories {
+    mavenCentral()
+    gradlePluginPortal()
+    maven {
+        url "https://packages.confluent.io/maven"
+    }
+}
+
+
+configurations {
+    providedRuntime
+}
+
+ext {
+    springBootStarterVersion = "2.6.6"
+    springBootGradlePluginVersion = "3.0.1"
+    springFrameworksVersion = "2.8.4"
+
+    jUnit4Version = "4.13.2"
+    jUnitVersion = "5.9.2"
+    lombokVersion = "1.18.24"
+
+}
+
+dependencies {
+    implementation "org.springframework.boot:spring-boot-gradle-plugin:${springBootGradlePluginVersion}"
+
+    providedRuntime('org.springframework.boot:spring-boot-starter-tomcat')
+
+    // springframework.boot
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation "org.springframework.boot:spring-boot-starter-parent:${springBootStarterVersion}"
+    implementation 'org.springframework.data:spring-data-elasticsearch:5.0.1'
+
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.13.2'
+    implementation 'jakarta.json:jakarta.json-api:2.0.1'
+
+    compileOnly "org.projectlombok:lombok:${lombokVersion}"
+    annotationProcessor "org.projectlombok:lombok:${lombokVersion}"
+
+    testCompileOnly "org.projectlombok:lombok:${lombokVersion}"
+    testAnnotationProcessor "org.projectlombok:lombok:${lombokVersion}"
+
+    testImplementation('org.springframework.boot:spring-boot-starter-test')
+
+    testImplementation "org.junit.vintage:junit-vintage-engine:${jUnitVersion}"
+    testImplementation "org.junit.jupiter:junit-jupiter-api:${jUnitVersion}"
+    testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:${jUnitVersion}"
+
+}
+
+test {
+    useJUnitPlatform()
+}
