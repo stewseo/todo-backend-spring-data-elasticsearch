@@ -2,7 +2,7 @@ spring:
   application:
     name: TodoApplication
 server:
-  port: 8083
+  port: 8081
 elastic:
   index: todo-index
 es:

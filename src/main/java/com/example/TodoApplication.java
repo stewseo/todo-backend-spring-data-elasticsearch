@@ -21,16 +21,16 @@ public class TodoApplication extends SpringBootServletInitializer {
         SpringApplication.run(TodoApplication.class, args);
     }
 
-    @Bean
-    public WebMvcConfigurer corsConfigurer() {
-        return new WebMvcConfigurer() {
-            @Override
-            public void addCorsMappings(@NonNull  CorsRegistry registry) {
-                registry.addMapping("/todos")
-                        .allowedOrigins("*")
-                        .allowedHeaders("*")
-                        .allowedMethods("*");
-            }
-        };
-    }
+//    @Bean
+//    public WebMvcConfigurer corsConfigurer() {
+//        return new WebMvcConfigurer() {
+//            @Override
+//            public void addCorsMappings(@NonNull  CorsRegistry registry) {
+//                registry.addMapping("/todos")
+//                        .allowedOrigins("*")
+//                        .allowedHeaders("*")
+//                        .allowedMethods("*");
+//            }
+//        };
+//    }
 }

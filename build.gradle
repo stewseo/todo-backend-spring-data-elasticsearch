@@ -26,53 +26,29 @@ java {
 
 repositories {
     mavenCentral()
-//    gradlePluginPortal()
-//    maven {
-//        url "https://packages.confluent.io/maven"
-//    }
 }
 
-
-//configurations {
-//    providedRuntime
-//}
-
-ext {
-    springBootStarterVersion = "2.7.2"
-    springBootGradlePluginVersion = "3.0.1"
-    springFrameworksVersion = "2.8.4"
-
-    jUnit4Version = "4.13.2"
-    jUnitVersion = "5.9.2"
-    lombokVersion = "1.18.24"
-
-}
 
 dependencies {
 
-    implementation "org.springframework.boot:spring-boot-gradle-plugin:${springBootGradlePluginVersion}"
+    implementation buildLibs.spring.boot.gradle
 
-//    providedRuntime('org.springframework.boot:spring-boot-starter-tomcat')
+    implementation buildLibs.spring.boot.starter.web
+    implementation buildLibs.spring.boot.starter.parent
 
-    // springframework.boot
-    implementation 'org.springframework.boot:spring-boot-starter-web'
-    implementation "org.springframework.boot:spring-boot-starter-parent:${springBootStarterVersion}"
-    implementation 'org.springframework.data:spring-data-elasticsearch:5.0.1'
+    implementation buildLibs.spring.data.elasticsearch
 
-    implementation 'com.fasterxml.jackson.core:jackson-databind:2.13.2'
-    implementation 'jakarta.json:jakarta.json-api:2.0.1'
 
-    compileOnly "org.projectlombok:lombok:${lombokVersion}"
-    annotationProcessor "org.projectlombok:lombok:${lombokVersion}"
+    implementation buildLibs.jackson.core
+    implementation buildLibs.jakarta.json.processing
 
-    testCompileOnly "org.projectlombok:lombok:${lombokVersion}"
-    testAnnotationProcessor "org.projectlombok:lombok:${lombokVersion}"
+    compileOnly buildLibs.lombok
+    annotationProcessor buildLibs.lombok
 
-    testImplementation('org.springframework.boot:spring-boot-starter-test')
-//    implementation 'org.springframework.boot:spring-boot-devtools:3.0.2'
-//    testImplementation "org.junit.vintage:junit-vintage-engine:${jUnitVersion}"
-//    testImplementation "org.junit.jupiter:junit-jupiter-api:${jUnitVersion}"
-//    testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:${jUnitVersion}"
+    testCompileOnly buildLibs.lombok
+    testAnnotationProcessor buildLibs.lombok
+
+    testImplementation buildLibs.spring.boot.starter.test
 
 }
 

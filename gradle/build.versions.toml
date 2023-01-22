@@ -1,0 +1,29 @@
+[versions]
+jackson = "2.13.2"
+jakartaJsonP = "2.0.1"
+jakartaJsonB = "2.0.0"
+
+spring = "3.0.2"
+
+[libraries]
+
+spring-boot-gradle = { group = "org.springframework.boot", name = "spring-boot-gradle-plugin", version.ref = "spring" }
+spring-boot-starter-test = { group = "org.springframework.boot", name = "spring-boot-starter-test", version.ref = "spring" }
+spring-boot-starter-web = { group = 'org.springframework.boot', name = 'spring-boot-starter-web', version.ref = "spring" }
+spring-boot-starter-parent = { group = 'org.springframework.boot', name = 'spring-boot-starter-parent', version.ref = "spring" }
+spring-boot-starter-devtols = { group = 'org.springframework.boot', name = 'spring-boot-devtools', version.ref = "spring" }
+
+spring-data-elasticsearch = { group = 'org.springframework.data', name = 'spring-data-elasticsearch', version = '5.0.1'}
+
+lombok = "org.projectlombok:lombok:1.18.24"
+
+jackson-core = { group = "com.fasterxml.jackson.core", name = "jackson-core", version.ref = "jackson" }
+jackson-databind = { group = "com.fasterxml.jackson.core", name = "jackson-databind", version.ref = "jackson" }
+jakarta-json-processing = { group = "jakarta.json", name = "jakarta.json-api", version.ref = "jakartaJsonP" }
+jakarta-json-bind = { group = "jakarta.json.bind", name = "jakarta.json.bind-api", version.ref = "jakartaJsonB" }
+
+spotbugs = "com.github.spotbugs:spotbugs-annotations:4.0.1"
+sonar-source = "org.sonarsource.scanner.gradle:sonarqube-gradle-plugin:3.5.0.2730"
+jacoco-badge = "com.github.dawnwords:jacoco-badge-gradle-plugin:0.2.4"
+
+docker-compose = "com.avast.gradle:gradle-docker-compose-plugin:0.14.13"

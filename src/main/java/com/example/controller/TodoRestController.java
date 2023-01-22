@@ -22,7 +22,18 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 
-@CrossOrigin
+import static org.springframework.web.bind.annotation.RequestMethod.DELETE;
+import static org.springframework.web.bind.annotation.RequestMethod.GET;
+import static org.springframework.web.bind.annotation.RequestMethod.OPTIONS;
+import static org.springframework.web.bind.annotation.RequestMethod.PATCH;
+import static org.springframework.web.bind.annotation.RequestMethod.POST;
+
+@CrossOrigin(
+        methods = {POST, GET, OPTIONS, DELETE, PATCH},
+        maxAge = 3600,
+        allowedHeaders = {"x-requested-with", "origin", "content-type", "accept"},
+        origins = "*"
+)
 @RequestMapping(headers = "Accept=application/json")
 @RestController
 public class TodoRestController {
@@ -38,7 +49,6 @@ public class TodoRestController {
 
     @DeleteMapping("/todos/{id}")
     public ResponseEntity<Todo> deleteById(@PathVariable(value = "id") Long id) throws IOException {
-        System.out.println("delete by id: " + id);
         Todo deletedTodo = repo.deleteById(id);
         return new ResponseEntity<>(deletedTodo, HttpStatus.OK);
     }
@@ -66,7 +76,7 @@ public class TodoRestController {
     }
 
     @GetMapping("/todos")
-    public List<Todo> getAllTodos() throws IOException {
+    public List<Todo> getAllTodos() {
         return repo.getAll();
     }
 

@@ -4,6 +4,14 @@ plugins {
 
 rootProject.name = 'spring-elastic-data-todo'
 
+dependencyResolutionManagement {
+    versionCatalogs {
+        buildLibs {
+            from(files("gradle/build.versions.toml"))
+        }
+    }
+}
+
 
 gradleEnterprise {
     buildScan {
