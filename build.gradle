@@ -2,43 +2,43 @@ plugins {
     id 'org.springframework.boot' version '2.7.4'
     id 'io.spring.dependency-management' version '1.0.14.RELEASE'
     id 'java-library'
-    id 'war'
+//    id 'war'
 }
 
 group 'com.example'
 version '0.0.1-SNAPSHOT'
 
-apply plugin: 'war'
+//apply plugin: 'war'
 
 java {
     sourceCompatibility = JavaVersion.VERSION_17
     targetCompatibility = JavaVersion.VERSION_17
 }
 
-bootWar {
-    destinationDirectory.set(file("$rootDir/libs"))
-    archiveBaseName.set('todo')
-    archiveVersion.set('0.0.1-SNAPSHOT')
-    manifest {
-        attributes 'Start-Class': 'com.example.TodoApplication'
-    }
-}
+//bootWar {
+//    destinationDirectory.set(file("$rootDir/libs"))
+//    archiveBaseName.set('todo')
+//    archiveVersion.set('0.0.1-SNAPSHOT')
+//    manifest {
+//        attributes 'Start-Class': 'com.example.TodoApplication'
+//    }
+//}
 
 repositories {
     mavenCentral()
-    gradlePluginPortal()
-    maven {
-        url "https://packages.confluent.io/maven"
-    }
+//    gradlePluginPortal()
+//    maven {
+//        url "https://packages.confluent.io/maven"
+//    }
 }
 
 
-configurations {
-    providedRuntime
-}
+//configurations {
+//    providedRuntime
+//}
 
 ext {
-    springBootStarterVersion = "2.6.6"
+    springBootStarterVersion = "2.7.2"
     springBootGradlePluginVersion = "3.0.1"
     springFrameworksVersion = "2.8.4"
 
@@ -49,9 +49,10 @@ ext {
 }
 
 dependencies {
+
     implementation "org.springframework.boot:spring-boot-gradle-plugin:${springBootGradlePluginVersion}"
 
-    providedRuntime('org.springframework.boot:spring-boot-starter-tomcat')
+//    providedRuntime('org.springframework.boot:spring-boot-starter-tomcat')
 
     // springframework.boot
     implementation 'org.springframework.boot:spring-boot-starter-web'
@@ -68,10 +69,10 @@ dependencies {
     testAnnotationProcessor "org.projectlombok:lombok:${lombokVersion}"
 
     testImplementation('org.springframework.boot:spring-boot-starter-test')
-
-    testImplementation "org.junit.vintage:junit-vintage-engine:${jUnitVersion}"
-    testImplementation "org.junit.jupiter:junit-jupiter-api:${jUnitVersion}"
-    testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:${jUnitVersion}"
+//    implementation 'org.springframework.boot:spring-boot-devtools:3.0.2'
+//    testImplementation "org.junit.vintage:junit-vintage-engine:${jUnitVersion}"
+//    testImplementation "org.junit.jupiter:junit-jupiter-api:${jUnitVersion}"
+//    testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:${jUnitVersion}"
 
 }
 

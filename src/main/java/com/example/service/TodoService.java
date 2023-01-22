@@ -13,7 +13,7 @@ public interface TodoService<T, Long> {
 
     Object deleteAll();
 
-    Object deleteById(Long id);
+    Object deleteById(Long id) throws IOException;
 
     T patch(Long id, T t);
 }

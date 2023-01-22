@@ -1,11 +1,10 @@
 package com.example.connector;
 
 import co.elastic.clients.elasticsearch.ElasticsearchAsyncClient;
-import co.elastic.clients.elasticsearch._types.Result;
-import co.elastic.clients.elasticsearch._types.WriteResponseBase;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.elasticsearch.core.DeleteByQueryResponse;
 import co.elastic.clients.elasticsearch.core.DeleteResponse;
+import co.elastic.clients.elasticsearch.core.IndexResponse;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
 import co.elastic.clients.elasticsearch.core.get.GetResult;
 import co.elastic.clients.elasticsearch.core.search.Hit;
@@ -32,11 +31,14 @@ public class ESClientConnector {
     @Autowired
     private ElasticsearchAsyncClient elasticsearchAsyncClient;
 
-    public Todo createOrUpdate(Todo todo) {
+    public IndexResponse createOrUpdate(Todo todo) {
         try {
-            elasticsearchAsyncClient.index(i -> i
+            String id = String.valueOf(todo.getId());
+
+            return elasticsearchAsyncClient.index(i -> i
                     .index(indexName)
-                    .id(String.valueOf(todo.getId()))
+                    .id(id)
+                    .pipeline("timestamp-pipeline")
                     .document(todo)
             ).whenComplete((resp, exception) -> {
                 if (exception != null) {
@@ -44,17 +46,20 @@ public class ESClientConnector {
                 } else {
                     logger.info("Indexed successfully");
                 }
-            }).thenApply(WriteResponseBase::result
-            ).get();
+            }).get();
 
         } catch (InterruptedException | ExecutionException e) {
             throw new RuntimeException(e);
         }
-        return todo;
     }
 
-    public Result deleteTodo(Long id) throws IOException {
-
+    public DeleteResponse deleteById(Long id) throws IOException {
+//        return elasticsearchAsyncClient.deleteByQuery(d -> d
+//                .query(q -> q
+//                        .match(m -> m
+//                .field("id")
+//                .query(id)))).get();
+//
         try {
             return elasticsearchAsyncClient.delete(d -> d
                     .index(indexName)
@@ -65,7 +70,7 @@ public class ESClientConnector {
                 } else {
                     logger.info("Indexed successfully");
                 }
-            }).thenApply(DeleteResponse::result).get();
+            }).get();
 
         } catch (InterruptedException | ExecutionException e) {
             throw new RuntimeException(e);
@@ -128,10 +133,13 @@ public class ESClientConnector {
     );
 
 
-    public DeleteByQueryResponse deleteAllTodos() {
+    public DeleteByQueryResponse deleteAll() {
+        logger.info("deleteAll: ");
         try {
             return elasticsearchAsyncClient.deleteByQuery(d -> d
-                    .query(ALL_TIMESTAMP_QUERY)
+                    .query(q -> q
+                            .matchAll(m -> m
+                                    .queryName("title")))
                     .index(indexName)
             ).whenComplete((resp, exception) -> {
                 if (exception != null) {
@@ -146,9 +154,6 @@ public class ESClientConnector {
     }
 
 
-    public Object deleteById(Long id) {
-        return null;
-    }
 
     public Todo patch(Long id, Todo newTodo) {
 
@@ -157,6 +162,7 @@ public class ESClientConnector {
         try {
             elasticsearchAsyncClient.update(u -> u
                             .index(indexName)
+                            .id(String.valueOf(id))
                             .doc(update)
                     , Todo.class
             ).whenComplete((resp, exception) -> {

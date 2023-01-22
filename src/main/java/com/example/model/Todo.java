@@ -1,16 +1,20 @@
 package com.example.model;
 
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.Value;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.elasticsearch.annotations.Document;
 import org.springframework.data.elasticsearch.annotations.Field;
 import org.springframework.data.elasticsearch.annotations.FieldType;
 
+@JsonIgnoreProperties("timestamp")
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
@@ -29,7 +33,8 @@ public class Todo {
     private String url;
 
     @Field(type = FieldType.Boolean, name = "completed")
-    private Boolean completed;
+    @Builder.Default
+    Boolean completed = false;
 
     @Field(type = FieldType.Integer, name = "order")
     private Integer order;

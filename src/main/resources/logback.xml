@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<configuration>
+<configuration debug="true">
     <!--    <property name="LOGS" value="./logs" />-->
 
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
@@ -9,7 +9,7 @@
     </appender>
 
     <!-- LOG everything at {level} -->
-    <root level="info">
+    <root level="debug">
 <!--        <appender-ref ref="RollingFile" />-->
         <appender-ref ref="CONSOLE" />
     </root>
