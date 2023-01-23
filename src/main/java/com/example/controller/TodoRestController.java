@@ -1,9 +1,9 @@
 package com.example.controller;
 
-import co.elastic.clients.elasticsearch.core.DeleteByQueryResponse;
 import com.example.model.Todo;
-import com.example.model.exceptions.InvalidTodoException;
+import com.example.model.exceptions.RecordNotFoundException;
 import com.example.service.impl.TodoServiceImpl;
+import jakarta.json.JsonArray;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -53,14 +53,16 @@ public class TodoRestController {
         return new ResponseEntity<>(deletedTodo, HttpStatus.OK);
     }
 
+
     @DeleteMapping("/todos")
-    public ResponseEntity<?> deleteAll() {
+    public ResponseEntity<String> deleteAll() {
 
         try{
-            DeleteByQueryResponse response = repo.deleteAll();
 
-            return new ResponseEntity<>(Collections.EMPTY_LIST, HttpStatus.OK);
-        } catch(InvalidTodoException e) {
+             String createIndexResponse = repo.deleteAll();
+
+            return new ResponseEntity<>(JsonArray.EMPTY_JSON_ARRAY.toString(), HttpStatus.OK);
+        } catch(RecordNotFoundException e) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Exception Stub");
         }
     }
@@ -70,7 +72,7 @@ public class TodoRestController {
 
         try{
             return repo.getById(id);
-        } catch(InvalidTodoException e) {
+        } catch(RecordNotFoundException e) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Exception Stub");
         }
     }

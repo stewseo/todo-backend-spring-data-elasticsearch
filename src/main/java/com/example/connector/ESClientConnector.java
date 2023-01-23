@@ -1,14 +1,14 @@
 package com.example.connector;
 
 import co.elastic.clients.elasticsearch.ElasticsearchAsyncClient;
+import co.elastic.clients.elasticsearch._types.mapping.TypeMapping;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
-import co.elastic.clients.elasticsearch.core.DeleteByQueryResponse;
 import co.elastic.clients.elasticsearch.core.DeleteResponse;
 import co.elastic.clients.elasticsearch.core.IndexResponse;
-import co.elastic.clients.elasticsearch.core.SearchResponse;
 import co.elastic.clients.elasticsearch.core.get.GetResult;
 import co.elastic.clients.elasticsearch.core.search.Hit;
-import co.elastic.clients.elasticsearch.core.search.HitsMetadata;
+import co.elastic.clients.elasticsearch.indices.CreateIndexResponse;
+import co.elastic.clients.elasticsearch.indices.DeleteIndexResponse;
 import co.elastic.clients.json.JsonData;
 import com.example.model.Todo;
 import org.slf4j.Logger;
@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
@@ -33,11 +34,11 @@ public class ESClientConnector {
 
     public IndexResponse createOrUpdate(Todo todo) {
         try {
-            String id = String.valueOf(todo.getId());
+
 
             return elasticsearchAsyncClient.index(i -> i
                     .index(indexName)
-                    .id(id)
+                    .id(String.valueOf(todo.getId()))
                     .pipeline("timestamp-pipeline")
                     .document(todo)
             ).whenComplete((resp, exception) -> {
@@ -78,7 +79,6 @@ public class ESClientConnector {
 
     }
 
-
     public Todo getById(Long id) {
 
         try {
@@ -112,9 +112,9 @@ public class ESClientConnector {
                         logger.info("Indexed successfully");
                     }
                 })
-                .thenApply(SearchResponse::hits)
-                .thenApply(HitsMetadata::hits)
                 .join()
+                .hits()
+                .hits()
                 .stream()
                 .map(Hit::source)
                 .collect(Collectors.toList()
@@ -123,7 +123,6 @@ public class ESClientConnector {
     }
 
     private final String TIMESTAMP_FIELD = "timestamp";
-
     private final JsonData MIN_TIMESTAMP_VALUE = JsonData.of(0);
 
     private final Query ALL_TIMESTAMP_QUERY = Query.of(q -> q
@@ -132,51 +131,80 @@ public class ESClientConnector {
                     .gte(MIN_TIMESTAMP_VALUE))
     );
 
+    public Todo patch(Long id, Todo newTodo) {
 
-    public DeleteByQueryResponse deleteAll() {
-        logger.info("deleteAll: ");
+        Todo update = newTodo.patchTodo();
+
+        return Objects.requireNonNull(elasticsearchAsyncClient.update(u -> u
+                                .index(indexName)
+                                .id(String.valueOf(id))
+                                .doc(update)
+                        , Todo.class
+                ).whenComplete((resp, exception) -> {
+                    if (exception != null) {
+                        logger.error("Patch Unsuccessful", exception);
+                    } else {
+
+                        logger.info("Patch Successful");
+                    }
+                })
+                .join()
+                .get()
+                )
+                .source();
+    }
+
+    public DeleteIndexResponse deleteIndex() {
+
         try {
-            return elasticsearchAsyncClient.deleteByQuery(d -> d
-                    .query(q -> q
-                            .matchAll(m -> m
-                                    .queryName("title")))
-                    .index(indexName)
-            ).whenComplete((resp, exception) -> {
-                if (exception != null) {
-                    logger.error("Failed to index", exception);
-                } else {
-                    logger.info("Indexed successfully");
-                }
-            }).get();
+            return elasticsearchAsyncClient.indices().delete(d -> d.index(indexName)).get();
         } catch (InterruptedException | ExecutionException e) {
             throw new RuntimeException(e);
         }
     }
 
-
-
-    public Todo patch(Long id, Todo newTodo) {
-
-        Todo update = newTodo.patchTodo();
+    public Long getId() {
 
         try {
-            elasticsearchAsyncClient.update(u -> u
-                            .index(indexName)
-                            .id(String.valueOf(id))
-                            .doc(update)
-                    , Todo.class
-            ).whenComplete((resp, exception) -> {
-                if (exception != null) {
-                    logger.error("Failed to index", exception);
-                } else {
-                    logger.info("Indexed successfully");
-                }
-            }).get();
+            long docsCount = Long.parseLong(Objects.requireNonNull(
+                    elasticsearchAsyncClient.cat().count(c -> c
+                                    .index(indexName)
+                            ).get()
+                            .valueBody()
+                            .get(0)
+                            .count()));
+
+            return docsCount + 1;
+
         } catch (InterruptedException | ExecutionException e) {
             throw new RuntimeException(e);
         }
+    }
 
-        return update;
+    public TypeMapping getTypeMapping() {
+        try {
+            return elasticsearchAsyncClient
+                    .indices()
+                    .getMapping(b -> b
+                            .index(indexName))
+                    .get()
+                    .result()
+                    .get(indexName)
+                    .mappings();
+
+        } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public CreateIndexResponse createIndex(TypeMapping typeMapping) {
+        try {
+            return elasticsearchAsyncClient.indices().create(c -> c
+                    .index(indexName)
+                    .mappings(typeMapping)).get();
+        } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e);
+        }
     }
 
 }

@@ -30,11 +30,12 @@ public class Todo {
     private String title;
 
     @Field(type = FieldType.Text, name = "url")
+
     private String url;
 
     @Field(type = FieldType.Boolean, name = "completed")
     @Builder.Default
-    Boolean completed = false;
+    private Boolean completed = false;
 
     @Field(type = FieldType.Integer, name = "order")
     private Integer order;
@@ -47,9 +48,9 @@ public class Todo {
             update.title(this.getTitle());
         }
 
-//        if (this.completed) {
-//            update.completed(this.completed);
-//        }
+        if (this.completed) {
+            update.completed(true);
+        }
 
         if (this.order != null) {
             update.order(this.order);

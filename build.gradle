@@ -2,27 +2,27 @@ plugins {
     id 'org.springframework.boot' version '2.7.4'
     id 'io.spring.dependency-management' version '1.0.14.RELEASE'
     id 'java-library'
-//    id 'war'
+    id 'war'
 }
 
 group 'com.example'
 version '0.0.1-SNAPSHOT'
 
-//apply plugin: 'war'
+apply plugin: 'war'
 
 java {
     sourceCompatibility = JavaVersion.VERSION_17
     targetCompatibility = JavaVersion.VERSION_17
 }
 
-//bootWar {
-//    destinationDirectory.set(file("$rootDir/libs"))
-//    archiveBaseName.set('todo')
-//    archiveVersion.set('0.0.1-SNAPSHOT')
-//    manifest {
-//        attributes 'Start-Class': 'com.example.TodoApplication'
-//    }
-//}
+bootWar {
+    destinationDirectory.set(file("$rootDir/libs"))
+    archiveBaseName.set('todo')
+    archiveVersion.set('0.0.1-SNAPSHOT')
+    manifest {
+        attributes 'Start-Class': 'com.example.TodoApplication'
+    }
+}
 
 repositories {
     mavenCentral()

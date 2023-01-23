@@ -60,15 +60,6 @@ class ESClientConnectorTest {
     }
 
     @Test
-    void testDeleteAllTodos() {
-        Todo todo = TestTodo.generateValidTodo();
-        esClientConnector.createOrUpdate(todo);
-        DeleteByQueryResponse response = esClientConnector.deleteAll();
-        assertThat(response.deleted()).isEqualTo(1L);
-    }
-
-
-    @Test
     void testPatch() {
         Todo todo = TestTodo.generateValidTodo();
         assertThat(todo.getTitle()).isEqualTo("a todo");

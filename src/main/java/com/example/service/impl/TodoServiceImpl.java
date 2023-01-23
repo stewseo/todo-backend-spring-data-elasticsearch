@@ -1,20 +1,21 @@
 package com.example.service.impl;
 
+import co.elastic.clients.elasticsearch._types.mapping.TypeMapping;
 import co.elastic.clients.elasticsearch.core.DeleteByQueryResponse;
 import co.elastic.clients.elasticsearch.core.DeleteResponse;
+import co.elastic.clients.elasticsearch.indices.CreateIndexResponse;
 import com.example.connector.ESClientConnector;
 import com.example.model.Todo;
-import com.example.model.exceptions.InvalidTodoException;
+import com.example.model.exceptions.RecordNotFoundException;
 import com.example.service.TodoService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
 @Service
@@ -23,33 +24,27 @@ public class TodoServiceImpl implements TodoService<Todo, Long> {
     @Autowired
     private ESClientConnector esClientConnector;
 
-    private final AtomicLong counter = new AtomicLong();
-
-    private static final String DEFAULT_TITLE = "a todo";
-
-    private static final String DEFAULT_URL = "https://todo-java.herokuapp.com:443/todos";
+    private final Map<Long, Todo> todos = new ConcurrentHashMap<>();
 
     @Override
     public Todo createOrUpdate(Todo todo) {
         try {
+            long id = esClientConnector.getId();
 
-            if (todo.getId() == null) {
-                final Long id = counter.getAndIncrement();
-                todo.setId(id);
-            }
+            todo.setId(id);
 
             if (todo.getUrl() == null) {
-                String urlString = DEFAULT_URL + "/" + todo.getId();
+                String urlString = "https://todo-backend-spring-data-elasticsearch.herokuapp.com:443/todos/" + id;
                 todo.setUrl(urlString);
             }
-            if (todo.getTitle() == null) {
-                todo.setTitle(DEFAULT_TITLE);
-            }
+
             esClientConnector.createOrUpdate(todo);
+            todos.put(id, todo);
+
             return todo;
 
-        } catch (InvalidTodoException e) {
-            throw new InvalidTodoException("Todo is missing required fields {}", e);
+        } catch (RecordNotFoundException e) {
+            throw new RecordNotFoundException("Todo is missing required fields {}", e);
         }
     }
 
@@ -60,26 +55,28 @@ public class TodoServiceImpl implements TodoService<Todo, Long> {
 
     @Override
     public List<Todo> getAll() {
-        return esClientConnector.getAll();
+        return todos.values().stream().toList();
     }
 
     @Override
-    public DeleteByQueryResponse deleteAll() {
-        return esClientConnector.deleteAll();
+    public String deleteAll() {
+
+        TypeMapping typeMapping = esClientConnector.getTypeMapping();
+        esClientConnector.deleteIndex();
+        CreateIndexResponse indexResponse = esClientConnector.createIndex(typeMapping);
+        todos.clear();
+        return indexResponse.toString();
     }
 
     @Override
     public Todo deleteById(Long id) throws IOException {
-        Todo todo = esClientConnector.getById(id);
-        if(todo != null) {
-            esClientConnector.deleteById(id);
-            return todo;
-        }
-        return null;
+        DeleteResponse deleteResponse = esClientConnector.deleteById(id);
+        return todos.remove(id);
     }
 
     @Override
     public Todo patch(Long id, Todo todo) {
-        return esClientConnector.patch(id, todo);
+        Todo updated = esClientConnector.patch(id, todo);
+        return todos.replace(id, updated);
     }
 }

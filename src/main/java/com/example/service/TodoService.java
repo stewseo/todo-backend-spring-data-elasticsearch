@@ -16,4 +16,5 @@ public interface TodoService<T, Long> {
     Object deleteById(Long id) throws IOException;
 
     T patch(Long id, T t);
+
 }
