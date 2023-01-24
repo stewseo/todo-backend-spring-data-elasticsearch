@@ -9,5 +9,5 @@ es:
   hostname: my-deployment-alias-restaurants-001.es.us-west-1.aws.found.io
   scheme: https
   port: 443
-  apikeyid: $API_KEY_ID
-  apikeysecret: $API_KEY_SECRET
+  apikeyid: ${API_KEY_ID}
+  apikeysecret: ${API_KEY_SECRET}
