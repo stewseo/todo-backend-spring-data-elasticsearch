@@ -5,7 +5,6 @@ import co.elastic.clients.elasticsearch._types.mapping.TypeMapping;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.elasticsearch.core.DeleteResponse;
 import co.elastic.clients.elasticsearch.core.IndexResponse;
-import co.elastic.clients.elasticsearch.core.get.GetResult;
 import co.elastic.clients.elasticsearch.core.search.Hit;
 import co.elastic.clients.elasticsearch.indices.CreateIndexResponse;
 import co.elastic.clients.elasticsearch.indices.DeleteIndexResponse;
@@ -54,28 +53,19 @@ public class ESClientConnector {
         }
     }
 
-    public DeleteResponse deleteById(Long id) throws IOException {
-//        return elasticsearchAsyncClient.deleteByQuery(d -> d
-//                .query(q -> q
-//                        .match(m -> m
-//                .field("id")
-//                .query(id)))).get();
-//
-        try {
-            return elasticsearchAsyncClient.delete(d -> d
-                    .index(indexName)
-                    .id(String.valueOf(id))
-            ).whenComplete((resp, exception) -> {
-                if (exception != null) {
-                    logger.error("Failed to index", exception);
-                } else {
-                    logger.info("Indexed successfully");
-                }
-            }).get();
 
-        } catch (InterruptedException | ExecutionException e) {
-            throw new RuntimeException(e);
-        }
+    public DeleteResponse deleteById(Long id) throws IOException {
+
+        return elasticsearchAsyncClient.delete(d -> d
+                .index(indexName)
+                .id(String.valueOf(id))
+        ).whenComplete((resp, exception) -> {
+            if (exception != null) {
+                logger.error("Failed to index", exception);
+            } else {
+                logger.info("Indexed successfully");
+            }
+        }).join();
 
     }
 
@@ -93,13 +83,12 @@ public class ESClientConnector {
                 } else {
                     logger.info("Indexed successfully");
                 }
-            }).thenApply(GetResult::source).get();
+            }).get().source();
 
         } catch (InterruptedException | ExecutionException e) {
             throw new RuntimeException(e);
         }
     }
-
 
     public List<Todo> getAll() {
         return elasticsearchAsyncClient.search(s -> s
@@ -122,37 +111,24 @@ public class ESClientConnector {
 
     }
 
-    private final String TIMESTAMP_FIELD = "timestamp";
-    private final JsonData MIN_TIMESTAMP_VALUE = JsonData.of(0);
 
     private final Query ALL_TIMESTAMP_QUERY = Query.of(q -> q
             .range(r -> r
-                    .field(TIMESTAMP_FIELD)
-                    .gte(MIN_TIMESTAMP_VALUE))
+                    .field("timestamp")
+                    .gte(JsonData.of(0)))
     );
 
-    public Todo patch(Long id, Todo newTodo) {
+    public Todo patch(Long id,Todo todo) {
 
-        Todo update = newTodo.patchTodo();
+        elasticsearchAsyncClient.update(u -> u
+                .index(indexName)
+                .id(String.valueOf(id))
+                .doc(todo), Todo.class);
 
-        return Objects.requireNonNull(elasticsearchAsyncClient.update(u -> u
-                                .index(indexName)
-                                .id(String.valueOf(id))
-                                .doc(update)
-                        , Todo.class
-                ).whenComplete((resp, exception) -> {
-                    if (exception != null) {
-                        logger.error("Patch Unsuccessful", exception);
-                    } else {
+        return todo;
 
-                        logger.info("Patch Successful");
-                    }
-                })
-                .join()
-                .get()
-                )
-                .source();
     }
+
 
     public DeleteIndexResponse deleteIndex() {
 

@@ -17,45 +17,49 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Collectors;
 
 @Service
 public class TodoServiceImpl implements TodoService<Todo, Long> {
 
     @Autowired
     private ESClientConnector esClientConnector;
-
     private final Map<Long, Todo> todos = new ConcurrentHashMap<>();
+    private final AtomicLong atomicLong = new AtomicLong();
+    private final String API_BASE_PATH = "https://todo-spring-data-elasticsearch.herokuapp.com/todos";
 
     @Override
     public Todo createOrUpdate(Todo todo) {
+
         try {
-            long id = esClientConnector.getId();
+            long id = atomicLong.getAndIncrement();
 
-            todo.setId(id);
-
-            if (todo.getUrl() == null) {
-                String urlString = "https://todo-backend-spring-data-elasticsearch.herokuapp.com:443/todos/" + id;
-                todo.setUrl(urlString);
-            }
+            buildTodo(id, todo);
 
             esClientConnector.createOrUpdate(todo);
             todos.put(id, todo);
-
             return todo;
-
         } catch (RecordNotFoundException e) {
             throw new RecordNotFoundException("Todo is missing required fields {}", e);
         }
     }
 
+    private void buildTodo(long id, Todo todo) {
+        todo.setId(id);
+        todo.setUrl(API_BASE_PATH+"/"+id);
+        todo.setCompleted(false);
+
+    }
+
     @Override
     public Todo getById(Long id) {
-        return esClientConnector.getById(id);
+//        esClientConnector.getById(id);
+        return todos.get(id);
     }
 
     @Override
     public List<Todo> getAll() {
-        return todos.values().stream().toList();
+        return todos.values().stream().collect(Collectors.toList());
     }
 
     @Override
@@ -76,7 +80,26 @@ public class TodoServiceImpl implements TodoService<Todo, Long> {
 
     @Override
     public Todo patch(Long id, Todo todo) {
-        Todo updated = esClientConnector.patch(id, todo);
-        return todos.replace(id, updated);
+
+        Todo patchTo = todos.get(id);
+
+        patchWith(patchTo, todo);
+        
+        return esClientConnector.patch(id, patchTo);
+    }
+
+    public void patchWith(Todo todo, Todo patchWith) {
+        if(patchWith.getOrder() != null) {
+            todo.setOrder(patchWith.getOrder());
+        }
+
+        if(patchWith.getTitle() != null) {
+            todo.setTitle(patchWith.getTitle());
+        }
+
+        if(patchWith.getCompleted() != null) {
+            todo.setCompleted(true);
+        }
+
     }
 }

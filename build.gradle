@@ -6,7 +6,7 @@ plugins {
 }
 
 group 'com.example'
-version '0.0.1-SNAPSHOT'
+version '1.0-SNAPSHOT'
 
 apply plugin: 'war'
 
@@ -18,7 +18,7 @@ java {
 bootWar {
     destinationDirectory.set(file("$rootDir/libs"))
     archiveBaseName.set('todo')
-    archiveVersion.set('0.0.1-SNAPSHOT')
+    archiveVersion.set(project.version)
     manifest {
         attributes 'Start-Class': 'com.example.TodoApplication'
     }
@@ -54,4 +54,10 @@ dependencies {
 
 test {
     useJUnitPlatform()
+}
+
+task stage(dependsOn: ['build'])
+
+ext {
+    mainClassName = "com.example.TodoApplication"
 }

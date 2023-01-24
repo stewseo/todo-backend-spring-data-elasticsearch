@@ -30,9 +30,6 @@ public class ElasticsearchConfig {
     private String hostName;
     private int port;
 
-    @Value("my-deployment-alias-restaurants-001.es.us-west-1.aws.found.io")
-    private String host;
-
     @Bean
     public ElasticsearchAsyncClient getEsAsyncClient(){
 

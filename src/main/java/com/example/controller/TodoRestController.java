@@ -22,18 +22,7 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 
-import static org.springframework.web.bind.annotation.RequestMethod.DELETE;
-import static org.springframework.web.bind.annotation.RequestMethod.GET;
-import static org.springframework.web.bind.annotation.RequestMethod.OPTIONS;
-import static org.springframework.web.bind.annotation.RequestMethod.PATCH;
-import static org.springframework.web.bind.annotation.RequestMethod.POST;
-
-@CrossOrigin(
-        methods = {POST, GET, OPTIONS, DELETE, PATCH},
-        maxAge = 3600,
-        allowedHeaders = {"x-requested-with", "origin", "content-type", "accept"},
-        origins = "*"
-)
+@CrossOrigin
 @RequestMapping(headers = "Accept=application/json")
 @RestController
 public class TodoRestController {
@@ -55,13 +44,13 @@ public class TodoRestController {
 
 
     @DeleteMapping("/todos")
-    public ResponseEntity<String> deleteAll() {
+    public ResponseEntity<List<Object>> deleteAll() {
 
         try{
 
              String createIndexResponse = repo.deleteAll();
 
-            return new ResponseEntity<>(JsonArray.EMPTY_JSON_ARRAY.toString(), HttpStatus.OK);
+            return new ResponseEntity<>(Collections.emptyList(), HttpStatus.OK);
         } catch(RecordNotFoundException e) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Exception Stub");
         }
