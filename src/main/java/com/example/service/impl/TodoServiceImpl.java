@@ -1,6 +1,9 @@
 package com.example.service.impl;
 
 import co.elastic.clients.elasticsearch._types.mapping.TypeMapping;
+import co.elastic.clients.elasticsearch._types.query_dsl.MatchAllQuery;
+import co.elastic.clients.elasticsearch._types.query_dsl.Query;
+import co.elastic.clients.elasticsearch.core.DeleteByQueryRequest;
 import co.elastic.clients.elasticsearch.core.DeleteByQueryResponse;
 import co.elastic.clients.elasticsearch.core.DeleteResponse;
 import co.elastic.clients.elasticsearch.indices.CreateIndexResponse;
@@ -24,71 +27,84 @@ public class TodoServiceImpl implements TodoService<Todo, Long> {
 
     @Autowired
     private ESClientConnector esClientConnector;
-    private final Map<Long, Todo> todos = new ConcurrentHashMap<>();
-    private final AtomicLong atomicLong = new AtomicLong();
-    private final String API_BASE_PATH = "https://todo-spring-data-elasticsearch.herokuapp.com/todos";
+
+//    private final Map<Long, Todo> todos = new ConcurrentHashMap<>();
 
     @Override
     public Todo createOrUpdate(Todo todo) {
 
         try {
-            long id = atomicLong.getAndIncrement();
 
-            buildTodo(id, todo);
+            buildTodo(todo);
 
-            esClientConnector.createOrUpdate(todo);
-            todos.put(id, todo);
-            return todo;
+            return esClientConnector.createOrUpdate(todo);
+
         } catch (RecordNotFoundException e) {
             throw new RecordNotFoundException("Todo is missing required fields {}", e);
         }
     }
 
-    private void buildTodo(long id, Todo todo) {
-        todo.setId(id);
-        todo.setUrl(API_BASE_PATH+"/"+id);
-        todo.setCompleted(false);
+    private final String API_BASE_PATH = "https://todo-spring-data-elasticsearch.herokuapp.com/todos";
 
+    private final AtomicLong atomicLong = new AtomicLong();
+
+    private void buildTodo(Todo todo) {
+        long id = atomicLong.getAndIncrement();
+
+        todo.setId(id);
+        if(todo.getId() == null) {
+
+        }
+        todo.setUrl(API_BASE_PATH + "/" + id);
+        todo.setCompleted(false);
     }
+
 
     @Override
     public Todo getById(Long id) {
-//        esClientConnector.getById(id);
-        return todos.get(id);
+        return esClientConnector.getById(id);
     }
 
     @Override
     public List<Todo> getAll() {
-        return todos.values().stream().collect(Collectors.toList());
+        return esClientConnector.getAll().size() == 0 ? Collections.emptyList() : esClientConnector.getAll();
+
     }
 
     @Override
     public String deleteAll() {
 
-        TypeMapping typeMapping = esClientConnector.getTypeMapping();
-        esClientConnector.deleteIndex();
-        CreateIndexResponse indexResponse = esClientConnector.createIndex(typeMapping);
-        todos.clear();
-        return indexResponse.toString();
+        long deleted = esClientConnector.deleteAll();
+
+        return String.valueOf(deleted);
     }
 
     @Override
     public Todo deleteById(Long id) throws IOException {
-        DeleteResponse deleteResponse = esClientConnector.deleteById(id);
-        return todos.remove(id);
+        Todo todo = esClientConnector.getById(id);
+        esClientConnector.getById(Long.valueOf(id));
+        return todo;
+
     }
 
     @Override
     public Todo patch(Long id, Todo todo) {
 
-        Todo patchTo = todos.get(id);
+        Todo patchTo = esClientConnector.getById(id);
 
         patchWith(patchTo, todo);
-        
+
         return esClientConnector.patch(id, patchTo);
     }
 
+    public void clearIndex() {
+        TypeMapping typeMapping = esClientConnector.getTypeMapping();
+        esClientConnector.deleteIndex();
+        CreateIndexResponse indexResponse = esClientConnector.createIndex(typeMapping);
+    }
+
     public void patchWith(Todo todo, Todo patchWith) {
+
         if(patchWith.getOrder() != null) {
             todo.setOrder(patchWith.getOrder());
         }
