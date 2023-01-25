@@ -6,7 +6,7 @@ plugins {
 }
 
 group 'com.example'
-version '1.0-SNAPSHOT'
+version '1.1-SNAPSHOT'
 
 apply plugin: 'war'
 
@@ -17,7 +17,7 @@ java {
 
 bootWar {
     destinationDirectory.set(file("$rootDir/libs"))
-    archiveBaseName.set('todo')
+    archiveBaseName.set('spring-data-elasticsearch')
     archiveVersion.set(project.version)
     manifest {
         attributes 'Start-Class': 'com.example.TodoApplication'
@@ -40,7 +40,16 @@ dependencies {
 
 
     implementation buildLibs.jackson.core
-    implementation buildLibs.jakarta.json.processing
+
+    api buildLibs.jakarta.json.bind
+    api buildLibs.jakarta.json.processing
+
+    api buildLibs.eclipse.parsson
+
+    testImplementation("org.eclipse:yasson:2.0.4") {
+        // Exclude Glassfish as we use Parsson (basically Glassfish renamed in the Jakarta namespace).
+        exclude(group: "org.glassfish", module: "jakarta.json")
+    }
 
     compileOnly buildLibs.lombok
     annotationProcessor buildLibs.lombok

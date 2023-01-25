@@ -1,11 +1,6 @@
 package com.example.service.impl;
 
 import co.elastic.clients.elasticsearch._types.mapping.TypeMapping;
-import co.elastic.clients.elasticsearch._types.query_dsl.MatchAllQuery;
-import co.elastic.clients.elasticsearch._types.query_dsl.Query;
-import co.elastic.clients.elasticsearch.core.DeleteByQueryRequest;
-import co.elastic.clients.elasticsearch.core.DeleteByQueryResponse;
-import co.elastic.clients.elasticsearch.core.DeleteResponse;
 import co.elastic.clients.elasticsearch.indices.CreateIndexResponse;
 import com.example.connector.ESClientConnector;
 import com.example.model.Todo;
@@ -20,7 +15,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.stream.Collectors;
 
 @Service
 public class TodoServiceImpl implements TodoService<Todo, Long> {
@@ -28,14 +22,14 @@ public class TodoServiceImpl implements TodoService<Todo, Long> {
     @Autowired
     private ESClientConnector esClientConnector;
 
-//    private final Map<Long, Todo> todos = new ConcurrentHashMap<>();
+    private Map<Long, Todo> todos = new ConcurrentHashMap<>();
 
     @Override
     public Todo createOrUpdate(Todo todo) {
 
         try {
 
-            buildTodo(todo);
+            setTodo(todo);
 
             return esClientConnector.createOrUpdate(todo);
 
@@ -44,46 +38,52 @@ public class TodoServiceImpl implements TodoService<Todo, Long> {
         }
     }
 
-    private final String API_BASE_PATH = "https://todo-spring-data-elasticsearch.herokuapp.com/todos";
+    private final String API_BASE_PATH = "https://spring-data-elasticsearch.herokuapp.com/todos";
 
-    private final AtomicLong atomicLong = new AtomicLong();
+    private static final AtomicLong atomicLong = new AtomicLong();
 
-    private void buildTodo(Todo todo) {
+    private void setTodo(Todo todo) {
+
         long id = atomicLong.getAndIncrement();
-
-        todo.setId(id);
-        if(todo.getId() == null) {
-
+        if (todo.getId() == null) {
+            todo.setId(id);
         }
-        todo.setUrl(API_BASE_PATH + "/" + id);
-        todo.setCompleted(false);
+        if (todo.getUrl() == null) {
+            todo.setUrl(API_BASE_PATH + "/" + id);
+        }
+        if (todo.getCompleted() == null || todo.getCompleted()) {
+            todo.setCompleted(false);
+        }
+        todos.put(id, todo);
     }
-
 
     @Override
     public Todo getById(Long id) {
+        todos.remove(id);
         return esClientConnector.getById(id);
     }
 
     @Override
     public List<Todo> getAll() {
-        return esClientConnector.getAll().size() == 0 ? Collections.emptyList() : esClientConnector.getAll();
 
+        if (todos.isEmpty()) {
+            return Collections.EMPTY_LIST;
+        } else {
+            esClientConnector.getAll();
+            return todos.values().stream().toList();
+        }
     }
 
     @Override
-    public String deleteAll() {
-
-        long deleted = esClientConnector.deleteAll();
-
-        return String.valueOf(deleted);
+    public Long deleteAll() {
+        todos.clear();
+        return esClientConnector.deleteAll();
     }
 
     @Override
-    public Todo deleteById(Long id) throws IOException {
-        Todo todo = esClientConnector.getById(id);
-        esClientConnector.getById(Long.valueOf(id));
-        return todo;
+    public String deleteById(Long id) throws IOException {
+        todos.remove(id);
+        return esClientConnector.deleteById(id);
 
     }
 

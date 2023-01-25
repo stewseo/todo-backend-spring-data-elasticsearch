@@ -1,7 +1,6 @@
 package com.example.controller;
 
 import com.example.model.Todo;
-import com.example.model.exceptions.RecordNotFoundException;
 import com.example.service.impl.TodoServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -15,7 +14,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -36,43 +34,33 @@ public class TodoRestController {
     }
 
     @DeleteMapping("/todos/{id}")
-    public ResponseEntity<Todo> deleteById(@PathVariable(value = "id") Long id) throws IOException {
-        Todo deletedTodo = service.deleteById(id);
-        return new ResponseEntity<>(deletedTodo, HttpStatus.OK);
+    public ResponseEntity<String> deleteById(@PathVariable(value = "id") Long id) throws IOException {
+        String result = service.deleteById(id);
+        return new ResponseEntity<>(result, HttpStatus.OK);
     }
 
     @DeleteMapping("/todos")
-    public ResponseEntity<List<Object>> deleteAll() {
-
-        try{
-
-             String createIndexResponse = service.deleteAll();
-
-            return new ResponseEntity<>(Collections.emptyList(), HttpStatus.OK);
-        } catch(RecordNotFoundException e) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Exception Stub");
-        }
+    public ResponseEntity<Object> deleteAll() {
+        Long deleted = service.deleteAll();
+        return new ResponseEntity<>(Collections.emptyList(), HttpStatus.OK);
     }
 
     @GetMapping("/todos/{id}")
-    public Todo getTodo(@PathVariable(value = "id") Long id) {
-
-        try{
-            return service.getById(id);
-        } catch(RecordNotFoundException e) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Exception Stub");
-        }
+    public ResponseEntity<Todo> getById(@PathVariable(value = "id") Long id) {
+        Todo todo = service.getById(id);
+        return new ResponseEntity<Todo>(todo, HttpStatus.OK);
     }
 
     @GetMapping("/todos")
-    public List<Todo> getAllTodos() {
-        return service.getAll();
+    public ResponseEntity<List<Todo>> getAll() {
+        List<Todo> todos = service.getAll();
+        return new ResponseEntity<>(todos, HttpStatus.OK);
     }
 
-
     @PatchMapping("/todos/{id}")
-    public Todo patchTodo(@PathVariable(value = "id") Long id, @RequestBody Todo newTodo) {
-        return service.patch(id, newTodo);
+    public ResponseEntity<Todo> patchTodo(@PathVariable(value = "id") Long id, @RequestBody Todo newTodo) {
+        Todo todo = service.patch(id, newTodo);
+        return new ResponseEntity<>(todo, HttpStatus.OK);
     }
 
 }

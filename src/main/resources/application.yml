@@ -2,12 +2,12 @@ spring:
   application:
     name: TodoApplication
 server:
-  port: 8081
+  port: 8080
 elastic:
   index: todo-index
 es:
   hostname: my-deployment-alias-restaurants-001.es.us-west-1.aws.found.io
   scheme: https
   port: 443
-  apikeyid: $API_KEY_ID
-  apikeysecret: $API_KEY_SECRET
+  apikeyid: ${API_KEY_ID}
+  apikeysecret: ${API_KEY_SECRET}

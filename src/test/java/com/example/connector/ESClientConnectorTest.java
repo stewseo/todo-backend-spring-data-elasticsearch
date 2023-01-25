@@ -22,9 +22,10 @@
 //
 //    @Test
 //    void testCreateOrUpdate() {
-//        Todo todo = TestTodo.generateValidTodo();
-//        long id = todo.getId();
-//        IndexResponse response = esClientConnector.createOrUpdate(todo);
+//        Todo todo = new Todo("title", "url");
+//
+//        String response = esClientConnector.createOrUpdate(todo);
+//
 //        assertThat(response.result().name()).isIn( "Created","Updated");
 //
 //        assertThat(response.result().jsonValue()).isIn("created","updated");
@@ -34,8 +35,8 @@
 //
 //    @Test
 //    void testDeleteById() throws IOException {
-//        Todo todo = TestTodo.generateValidTodo();
-//        IndexResponse response = esClientConnector.createOrUpdate(todo);
+//        Todo todo = new Todo();
+//
 //        DeleteResponse delResp = esClientConnector.deleteById(todo.getId());
 //        assertThat(delResp.result().name()).isIn("Deleted");
 //        assertThat(delResp.result().jsonValue()).isEqualTo("deleted");
@@ -43,7 +44,7 @@
 //
 //    @Test
 //    void testGetById() {
-//        Todo todo = TestTodo.generateValidTodo();
+//        Todo todo = new Todo();
 //        esClientConnector.createOrUpdate(todo);
 //        Todo res = esClientConnector.getById(todo.getId());
 //        assertThat(res.getId()).isNotNull();
@@ -53,7 +54,7 @@
 //    @Test
 //    void testGetAll() {
 //
-//        Todo todo = TestTodo.generateValidTodo();
+//        Todo todo = new Todo();
 //        esClientConnector.createOrUpdate(todo);
 //        List<Todo> res = esClientConnector.getAll();
 //        assertThat(res.size()).isEqualTo(2);
@@ -62,10 +63,10 @@
 //
 //    @Test
 //    void testPatch() {
-//        Todo todo = TestTodo.generateValidTodo();
+//        Todo todo = new Todo();
 //        assertThat(todo.getTitle()).isEqualTo("a todo");
 //        esClientConnector.createOrUpdate(todo);
-//        Todo patchWith = TestTodo.generatePatchWithTodo();
+//        Todo patchWith = new Todo();
 //        assertThat(patchWith.getTitle()).isEqualTo("patched todo");
 //        Todo patched = esClientConnector.patch(todo.getId(), patchWith);
 //        assertThat(patched.getTitle()).isEqualTo(patchWith.getTitle());

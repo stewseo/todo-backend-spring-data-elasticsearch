@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.data.elasticsearch.client.erhlc.RestClients;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
@@ -31,8 +32,7 @@ public class ElasticsearchConfig {
     private int port;
 
     @Bean
-    public ElasticsearchAsyncClient getEsAsyncClient(){
-
+    public RestClient getEsRestClient(){
         String apiKeyIdAndSecret = apiKeyId + ":" + apiKeySecret;
 
         String encodedApiKey = Base64.getEncoder() // The encoder maps the input to a set of characters in the A-Za-z0-9+/ character set
@@ -43,9 +43,14 @@ public class ElasticsearchConfig {
 
         Header[] defaultHeaders = {new BasicHeader("Authorization", "ApiKey " + encodedApiKey)};
 
-        builder.setDefaultHeaders(defaultHeaders);
+        return builder.setDefaultHeaders(defaultHeaders).build();
 
-        RestClient restClient = builder.build();
+    }
+
+    @Bean
+    public ElasticsearchAsyncClient getEsAsyncClient(){
+
+        RestClient restClient = getEsRestClient();
 
         final JacksonJsonpMapper mapper = new JacksonJsonpMapper();
 
