@@ -1,12 +1,12 @@
 plugins {
     id "org.springframework.boot" version "2.7.8"
     id 'io.spring.dependency-management' version '1.0.14.RELEASE'
-    id 'java-library'
+    id 'java'
     id 'war'
 }
 
 group 'com.example'
-version '1.1-SNAPSHOT'
+version '1.3.0-SNAPSHOT'
 
 apply plugin: 'war'
 
@@ -28,7 +28,6 @@ repositories {
     mavenCentral()
 }
 
-
 dependencies {
 
     implementation buildLibs.spring.boot.gradle
@@ -41,15 +40,15 @@ dependencies {
 
     implementation buildLibs.jackson.core
 
-    api buildLibs.jakarta.json.bind
-    api buildLibs.jakarta.json.processing
+    implementation buildLibs.jakarta.json.bind
+    implementation buildLibs.jakarta.json.processing
 
-    api buildLibs.eclipse.parsson
-
-    testImplementation("org.eclipse:yasson:2.0.4") {
-        // Exclude Glassfish as we use Parsson (basically Glassfish renamed in the Jakarta namespace).
-        exclude(group: "org.glassfish", module: "jakarta.json")
-    }
+//    implementation buildLibs.eclipse.parsson
+//
+//    testImplementation("org.eclipse:yasson:2.0.4") {
+//        // Exclude Glassfish as we use Parsson (basically Glassfish renamed in the Jakarta namespace).
+//        exclude(group: "org.glassfish", module: "jakarta.json")
+//    }
 
     compileOnly buildLibs.lombok
     annotationProcessor buildLibs.lombok
@@ -63,10 +62,4 @@ dependencies {
 
 test {
     useJUnitPlatform()
-}
-
-task stage(dependsOn: ['build'])
-
-ext {
-    mainClassName = "com.example.TodoApplication"
 }

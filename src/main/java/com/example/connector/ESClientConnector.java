@@ -1,95 +1,157 @@
 package com.example.connector;
 
 import co.elastic.clients.elasticsearch.ElasticsearchAsyncClient;
-import co.elastic.clients.elasticsearch._types.SortOrder;
-import co.elastic.clients.elasticsearch._types.mapping.TypeMapping;
 import co.elastic.clients.elasticsearch._types.query_dsl.MatchAllQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.elasticsearch.core.DeleteByQueryResponse;
-import co.elastic.clients.elasticsearch.core.SearchResponse;
+import co.elastic.clients.elasticsearch.core.IndexResponse;
+import co.elastic.clients.elasticsearch.core.UpdateResponse;
 import co.elastic.clients.elasticsearch.core.search.Hit;
-import co.elastic.clients.elasticsearch.core.search.HitsMetadata;
-import co.elastic.clients.elasticsearch.core.search.SourceConfig;
-import co.elastic.clients.elasticsearch.indices.CreateIndexResponse;
-import co.elastic.clients.elasticsearch.indices.DeleteIndexResponse;
 import com.example.model.Todo;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 @Service
 public class ESClientConnector {
-
-    private static final Logger logger = LoggerFactory.getLogger(ESClientConnector.class);
-
-    private final String indexName = "todo-index";
-
-    private final SourceConfig sourceConfig = SourceConfig.of(s -> s
-            .filter(f -> f
-                    .includes(List.of("_id", "todo")))
-    );
+    @Value("${elastic.index}")
+    private String indexName;
+    @Value("${elastic.tsPipeline}")
+    private String timestampPipeline = "timestamp-pipeline";
 
     @Autowired
     private ElasticsearchAsyncClient elasticsearchAsyncClient;
 
+    private ConcurrentHashMap<Long, Todo> todos = new ConcurrentHashMap<>();
+
+    // https://www.elastic.co/guide/en/elasticsearch/reference/current/docs.html
     public Todo createOrUpdate(Todo todo) {
 
-        String stringId = todo.getId().toString();
+        // Create or updateByQuery a document in an index.
+        CompletableFuture<String> cf = elasticsearchAsyncClient.index(i -> i
+                        .index(indexName)
+                        .id(String.valueOf(todo.getId())
+                        )
+                        .pipeline(timestampPipeline)
+                        .document(todo)
+                ).whenComplete((indexResponse, exception) -> {
+                    if (exception != null) {
+                        // stub exception
+                    } else {
+                        Long id = Long.parseLong(indexResponse.id());
+                        todos.put(id, todo);
+                    }
+                }).thenApply(IndexResponse::id);
 
-        elasticsearchAsyncClient.index(i -> i
-                .index(indexName)
-                .id(stringId)
-                .pipeline("timestamp-pipeline")
-                .document(todo)
-        ).whenComplete((resp, exception) -> {
-            if (exception != null) {
-                logger.error("Failed to index", exception);
-            } else {
-                logger.info("Indexed successfully");
-            }
-        }).join();
         return todo;
     }
 
-    public String deleteById(Long id) throws IOException {
-        return elasticsearchAsyncClient.delete(d -> d
-                .index(indexName)
-                .id(String.valueOf(id))
-        ).whenComplete((resp, exception) -> {
-            if (exception != null) {
-                logger.error("Failed to index", exception);
-            } else {
-                logger.info("Indexed successfully");
-            }
-        }).join().result().name();
-    }
-
     public Todo getById(Long id) {
-
-        return elasticsearchAsyncClient.get(g -> g
-                        .index(indexName)
-                        .id(String.valueOf(id)
-                        )
-                , Todo.class
-        ).whenComplete((resp, exception) -> {
-            if (exception != null) {
-                logger.error("Failed to index", exception);
-            } else {
-                logger.info("Indexed successfully");
-            }
-        }).join().source();
-
+        return todos.get(id);
     }
 
     public List<Todo> getAll() {
+        return todos.values().stream().toList();
+    }
+
+    public List<Todo> deleteAll() {
+
+        Query matchAllQuery = new MatchAllQuery.Builder().build()._toQuery();
+
+        todos.clear();
+
+        CompletableFuture<Long> cf = elasticsearchAsyncClient.deleteByQuery(deleteReque -> deleteReque
+                .index(indexName)
+                .query(matchAllQuery)
+                ).whenComplete((resp, exception) -> {
+                    if (exception != null) {
+                        // stub exception
+                    } else {
+                        // stub resp
+                    }
+                })
+                .thenApply(DeleteByQueryResponse::deleted);
+
+        return todos.values().stream().toList();
+    }
+
+    public Todo deleteById(Long id) throws IOException {
+        Todo t = todos.get(id);
+
+        CompletableFuture<DeleteByQueryResponse> cf = elasticsearchAsyncClient.deleteByQuery(deleteQuery -> deleteQuery
+                .index(indexName)
+                .query(matchQuery("id.keyword", id)
+                )
+        ).whenComplete((resp, exception) -> {
+            if (exception != null) {
+                // stub exception
+            } else {
+                todos.remove(id);
+                // stub resp
+            }
+        });
+
+        long deleted = cf.join().deleted();
+
+        return t;
+    }
+
+    public Todo patch(Todo patched) throws IOException {
+        // create or updateByQuery
+        return updateByQuery(patched);
+
+    }
+
+    public Todo updateByQuery(Todo todo) throws IOException {
+        String docId = String.valueOf(todo.getId());
+
+        CompletableFuture<String> cf = elasticsearchAsyncClient.update(req -> req
+                                .index(indexName)
+                                .id(docId)
+                                .doc(todo)
+                        , Todo.class
+                ).whenComplete((resp, exception) -> {
+                    if (exception != null) {
+
+                    } else {
+                        todos.replace(todo.getId(), todo);
+                    }
+                })
+                .thenApply(UpdateResponse::id);
+
+        Long id = Long.parseLong(cf.join());
+
+        return todos.get(id);
+    }
+
+    private boolean idExists(Long id) {
+        return elasticsearchAsyncClient.exists(e -> e
+                .index(indexName)
+                .id(id.toString()) // parsing a Long from _id is equal to the corresponding todo's id
+                )
+                .join().value();
+    }
+
+    private Long docsCount() {
+
+        return elasticsearchAsyncClient
+                .cat().count(c -> c
+                        .index(indexName)
+                ).join()
+                .valueBody().stream().mapToLong(countRecord ->
+                        Long.parseLong(countRecord.count())
+                )
+                .findAny()
+                .orElse(0);
+    }
+
+    public List<Todo> matchAll() {
 
         Query matchAllQuery = new MatchAllQuery.Builder().build()._toQuery();
 
@@ -100,112 +162,27 @@ public class ESClientConnector {
                         , Todo.class
                 ).whenComplete((resp, exception) -> {
                     if (exception != null) {
-                        logger.error("Failed to index", exception);
+                        // stub exception
                     } else {
-                        logger.info("Indexed successfully");
+                        // stub resp
                     }
                 })
-                .thenApply(SearchResponse::hits)
-                .thenApply(HitsMetadata::hits)
-                .join()
-                .stream()
-                .map(Hit::source)
-                .collect(Collectors.toList()
+                .join().hits().hits().stream()
+                .map(Hit::source).collect(Collectors.toList()
                 );
-
     }
 
-    public Long deleteAll() {
-
-        Query matchAllQuery = new MatchAllQuery.Builder().build()._toQuery();
-
-        CompletableFuture<Long> cf = elasticsearchAsyncClient.deleteByQuery(deleteReque -> deleteReque
-                .index(indexName)
-                .query(matchAllQuery)
-        ).whenComplete((resp, excp) -> {
-            if (excp != null) {
-            } else {
-            }
-
-        }).thenApply(DeleteByQueryResponse::deleted);
-
-
-        return cf.join();
+    private Query matchQuery(String field, Long query) {
+        return matchQuery(field, String.valueOf(query));
     }
 
-    public Todo patch(Long id, Todo todo) {
-
-        elasticsearchAsyncClient.update(u -> u
-                        .index(indexName)
-                        .id(String.valueOf(id))
-                        .doc(todo),
-                Todo.class)
-                .join();
-
-        return todo;
-    }
-
-    public Long docsCount() {
-
-        return Long.parseLong(
-                elasticsearchAsyncClient
-                        .cat().count(c -> c
-                                .index(indexName)
-                        ).join()
-                        .valueBody()
-                        .get(0)
-                        .count()
+    private Query matchQuery(String field, String query) {
+        return Query.of(q -> q // variant objects in the Java API Client are implementations of a “tagged union”: they contain the identifier (or tag) of the variant they hold and the value for that variant
+                .match(m -> m // Returns documents that match a provided text, number, date or boolean value. The provided text is analyzed before matching.
+                        .field(field) // search field
+                        .query(query) // search text
+                )
         );
     }
 
-    public TypeMapping getTypeMapping() {
-        try {
-            return elasticsearchAsyncClient
-                    .indices()
-                    .getMapping(b -> b
-                            .index(indexName))
-                    .get()
-                    .result()
-                    .get(indexName)
-                    .mappings();
-
-        } catch (InterruptedException | ExecutionException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    public CreateIndexResponse createIndex(TypeMapping typeMapping) {
-        try {
-            return elasticsearchAsyncClient.indices().create(c -> c
-                    .index(indexName)
-                    .mappings(typeMapping)).get();
-        } catch (InterruptedException | ExecutionException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    public Todo getMostRecentlyIndexed() {
-        return
-                elasticsearchAsyncClient.search(c -> c
-                                        .index(indexName)
-                                        .sort(z -> z
-                                                .field(f -> f
-                                                        .field("timestamp")
-                                                        .order(SortOrder.Desc))
-
-                                        ).size(1)
-                                , Todo.class
-                        ).join()
-                        .hits()
-                        .hits()
-                        .stream()
-                        .map(Hit::source)
-                        .findAny().orElse(null);
-
-    }
-
-    public DeleteIndexResponse deleteIndex() {
-
-        return elasticsearchAsyncClient.indices().delete(d -> d.index(indexName)).join();
-    }
 }

@@ -1,20 +1,15 @@
 package com.example.service.impl;
 
-import co.elastic.clients.elasticsearch._types.mapping.TypeMapping;
-import co.elastic.clients.elasticsearch.indices.CreateIndexResponse;
 import com.example.connector.ESClientConnector;
 import com.example.model.Todo;
-import com.example.model.exceptions.RecordNotFoundException;
 import com.example.service.TodoService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
-import java.util.Collections;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.Optional;
+import java.util.concurrent.ThreadLocalRandom;
 
 @Service
 public class TodoServiceImpl implements TodoService<Todo, Long> {
@@ -22,100 +17,76 @@ public class TodoServiceImpl implements TodoService<Todo, Long> {
     @Autowired
     private ESClientConnector esClientConnector;
 
-    private Map<Long, Todo> todos = new ConcurrentHashMap<>();
+    private final String API_BASE_URL = "https://spring-data-elasticsearch.herokuapp.com/todos";
 
     @Override
     public Todo createOrUpdate(Todo todo) {
 
-        try {
+        long id = ThreadLocalRandom.current().nextLong(Long.MAX_VALUE);
 
-            setTodo(todo);
+        setTodo(todo, id);
 
-            return esClientConnector.createOrUpdate(todo);
+        return esClientConnector.createOrUpdate(todo);
 
-        } catch (RecordNotFoundException e) {
-            throw new RecordNotFoundException("Todo is missing required fields {}", e);
-        }
     }
 
-    private final String API_BASE_PATH = "https://spring-data-elasticsearch.herokuapp.com/todos";
-
-    private static final AtomicLong atomicLong = new AtomicLong();
-
-    private void setTodo(Todo todo) {
-
-        long id = atomicLong.getAndIncrement();
-        if (todo.getId() == null) {
+    private void setTodo(Todo todo, Long id) {
+        String url = API_BASE_URL + "/" + id;
+        if(id != null) {
             todo.setId(id);
         }
-        if (todo.getUrl() == null) {
-            todo.setUrl(API_BASE_PATH + "/" + id);
+        if(url != null) {
+            todo.setUrl(url);
         }
-        if (todo.getCompleted() == null || todo.getCompleted()) {
-            todo.setCompleted(false);
+        todo.setCompleted(false);
+        if(todo.getOrder() != null) {
+            todo.setOrder(todo.getOrder());
         }
-        todos.put(id, todo);
     }
 
     @Override
     public Todo getById(Long id) {
-        todos.remove(id);
         return esClientConnector.getById(id);
     }
 
     @Override
     public List<Todo> getAll() {
-
-        if (todos.isEmpty()) {
-            return Collections.EMPTY_LIST;
-        } else {
-            esClientConnector.getAll();
-            return todos.values().stream().toList();
-        }
+        return esClientConnector.getAll();
     }
 
     @Override
-    public Long deleteAll() {
-        todos.clear();
+    public List<Todo> deleteAll() {
         return esClientConnector.deleteAll();
     }
 
     @Override
-    public String deleteById(Long id) throws IOException {
-        todos.remove(id);
+    public Todo deleteById(Long id) throws IOException {
         return esClientConnector.deleteById(id);
-
     }
 
     @Override
-    public Todo patch(Long id, Todo todo) {
+    public Todo patch(Long id, Todo patchWith) throws IOException {
 
-        Todo patchTo = esClientConnector.getById(id);
+        Todo todo = esClientConnector.getById(id);
 
-        patchWith(patchTo, todo);
+        patchTodo(todo, patchWith);
 
-        return esClientConnector.patch(id, patchTo);
+        return esClientConnector.patch(todo);
     }
 
-    public void clearIndex() {
-        TypeMapping typeMapping = esClientConnector.getTypeMapping();
-        esClientConnector.deleteIndex();
-        CreateIndexResponse indexResponse = esClientConnector.createIndex(typeMapping);
+    private void patchTodo(Todo todo, Todo patchWith) {
+
+        String title = patchWith.getTitle();
+        if (title != null) {
+            todo.setTitle(title);
+        }
+
+        Integer order = patchWith.getOrder();
+        if (order != null) {
+            todo.setOrder(order);
+        }
+
+        todo.setCompleted(true);
     }
 
-    public void patchWith(Todo todo, Todo patchWith) {
-
-        if(patchWith.getOrder() != null) {
-            todo.setOrder(patchWith.getOrder());
-        }
-
-        if(patchWith.getTitle() != null) {
-            todo.setTitle(patchWith.getTitle());
-        }
-
-        if(patchWith.getCompleted() != null) {
-            todo.setCompleted(true);
-        }
-
-    }
 }

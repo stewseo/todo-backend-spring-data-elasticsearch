@@ -32,10 +32,11 @@ public class ElasticsearchConfig {
     private int port;
 
     @Bean
-    public RestClient getEsRestClient(){
+    public RestClient getESRestClient(){
+
         String apiKeyIdAndSecret = apiKeyId + ":" + apiKeySecret;
 
-        String encodedApiKey = Base64.getEncoder() // The encoder maps the input to a set of characters in the A-Za-z0-9+/ character set
+        final String encodedApiKey = Base64.getEncoder() // The encoder maps the input to a set of characters in the A-Za-z0-9+/ character set
                 .encodeToString((apiKeyIdAndSecret) // Encodes the specified byte array into a String using the Base64 encoding scheme.
                         .getBytes(StandardCharsets.UTF_8));
 
@@ -50,9 +51,9 @@ public class ElasticsearchConfig {
     @Bean
     public ElasticsearchAsyncClient getEsAsyncClient(){
 
-        RestClient restClient = getEsRestClient();
+        RestClient restClient = getESRestClient();
 
-        final JacksonJsonpMapper mapper = new JacksonJsonpMapper();
+        JacksonJsonpMapper mapper = new JacksonJsonpMapper();
 
         ElasticsearchTransport transport = new RestClientTransport(restClient, mapper);
 
