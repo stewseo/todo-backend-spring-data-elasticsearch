@@ -13,7 +13,7 @@ api base url -- https://spring-data-elasticsearch.herokuapp.com:443/todos
 ./gradlew clean --rerun-tasks && ./gradlew assemble --rerun-tasks --scan
 ```
 
-### Deploy the WAR file using the heroku CLI
+### [deploy the local WAR file to Heroku and run it with Tomcat Webapp-Runner](https://devcenter.heroku.com/articles/war-deployment#deployment-with-the-heroku-cli)
 
 ``` 
 heroku war:deploy build/libs/spring-data-elasticsearch-*.war --app spring-data-elasticsearch
@@ -25,4 +25,5 @@ heroku war:deploy build/libs/spring-data-elasticsearch-*.war --app spring-data-e
 heroku logs --app spring-data-elasticsearch --tail
 
 ```
-![](../../../Pictures/Screenshots/Screenshot_20230126_060334.png)
+
+![Screenshot_20230126_060334](https://user-images.githubusercontent.com/54422342/214996250-84108ab7-0266-4f05-a715-debb580b7ebd.png)

@@ -57,7 +57,8 @@ public class ESClientConnector {
     }
 
     public List<Todo> getAll() {
-        return todos.values().stream().toList();
+        return matchAll();
+//        return todos.values().stream().toList();
     }
 
     public List<Todo> deleteAll() {
@@ -130,7 +131,7 @@ public class ESClientConnector {
         return todos.get(id);
     }
 
-    private boolean idExists(Long id) {
+    public boolean idExists(Long id) {
         return elasticsearchAsyncClient.exists(e -> e
                 .index(indexName)
                 .id(id.toString()) // parsing a Long from _id is equal to the corresponding todo's id
@@ -138,7 +139,7 @@ public class ESClientConnector {
                 .join().value();
     }
 
-    private Long docsCount() {
+    public Long docsCount() {
 
         return elasticsearchAsyncClient
                 .cat().count(c -> c
@@ -172,11 +173,11 @@ public class ESClientConnector {
                 );
     }
 
-    private Query matchQuery(String field, Long query) {
+    public Query matchQuery(String field, Long query) {
         return matchQuery(field, String.valueOf(query));
     }
 
-    private Query matchQuery(String field, String query) {
+    public Query matchQuery(String field, String query) {
         return Query.of(q -> q // variant objects in the Java API Client are implementations of a “tagged union”: they contain the identifier (or tag) of the variant they hold and the value for that variant
                 .match(m -> m // Returns documents that match a provided text, number, date or boolean value. The provided text is analyzed before matching.
                         .field(field) // search field
