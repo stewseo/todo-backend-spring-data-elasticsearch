@@ -80,13 +80,15 @@ public class TodoServiceImpl implements TodoService<Todo, Long> {
         if (title != null) {
             todo.setTitle(title);
         }
-
         Integer order = patchWith.getOrder();
         if (order != null) {
             todo.setOrder(order);
         }
+        Boolean completed = patchWith.getCompleted();
+        if (completed != null) {
+            todo.setCompleted(true);
+        }
 
-        todo.setCompleted(true);
     }
 
 }
