@@ -1,26 +1,30 @@
 # https://todobackend.com/index.html
 
-java 17, spring-data-elasticsearch 5, spring-boot 2, gradle 7.6
-
-version catalog path -- $rootDir/gradle/versions.toml
-<br/>
+- Java 17.0.4 Adoptium Temurin 
+- Spring Data Elasticsearch 5.0.1
+- Spring Boot 2.7.4
+- Gradle 7.6
+- Heroku CLI 7.53.0
 
 api base url -- https://spring-data-elasticsearch.herokuapp.com:443/todos
 <br/>
 
-### Build the project, package the Spring Boot application as a WAR file
+### [Clear Caches, Build the Spring Boot Application, and Package as WAR](https://docs.gradle.org/current/userguide/war_plugin.html)
 ``` 
 ./gradlew clean --rerun-tasks && ./gradlew assemble --rerun-tasks --scan
 ```
+<br/>
 
-### [deploy the local WAR file to Heroku and run it with Tomcat Webapp-Runner](https://devcenter.heroku.com/articles/war-deployment#deployment-with-the-heroku-cli)
-
-``` 
-heroku war:deploy build/libs/spring-data-elasticsearch-*.war --app spring-data-elasticsearch
+### [Deploy the local WAR file to Heroku and run it with Tomcat Webapp-Runner](https://devcenter.heroku.com/articles/war-deployment#deployment-with-the-heroku-cli)
 
 ``` 
+heroku war:deploy libs/spring-data-elasticsearch-*.war --app spring-data-elasticsearch
 
-### Example logs
+``` 
+
+<br/>
+
+### [Real-time tail logs from a successful request](https://devcenter.heroku.com/articles/logging)
 ```java
 heroku logs --app spring-data-elasticsearch --tail
 

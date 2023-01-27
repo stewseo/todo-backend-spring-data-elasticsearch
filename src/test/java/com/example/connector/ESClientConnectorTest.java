@@ -22,28 +22,42 @@ class ESClientConnectorTest {
     @Autowired
     private ESClientConnector esClientConnector;
 
+    private List<Todo> todos;
+
+
     @BeforeEach
     void beforeEach() {
+
+        todos = esClientConnector.getAll();
+
+        assertThat(todos.size()).isEqualTo(0);
+        assertThat(esClientConnector.docsCount()).isEqualTo(todos.size());
+
         for (Long id : List.of(1L, 2L, 3L)) {
+            System.out.println(id);
             esClientConnector.createOrUpdate(new Todo(id, URL + "/" + id, "a todo", id.intValue(), false));
         }
+
+        todos = esClientConnector.getAll();
+
+        assertThat(todos.size()).isEqualTo(3);
+        assertThat(esClientConnector.docsCount()).isEqualTo(todos.size());
+
     }
 
     @AfterEach
     void afterEach() {
-        esClientConnector.deleteAll();
+        todos = esClientConnector.deleteAll();
+
+        assertThat(todos.size()).isEqualTo(0);
+        assertThat(esClientConnector.docsCount()).isEqualTo(todos.size());
     }
 
     @Test
     void testGetAll() {
-        assertThat(esClientConnector.getAll().size()).isEqualTo(3);
-    }
-
-    @Test
-    void deleteDocumentTest() {
-        esClientConnector.deleteAll();
-        assertThat(esClientConnector.docsCount()).isEqualTo(0);
-        assertThat(esClientConnector.getAll().size()).isEqualTo(0);
+        for(Todo todo : todos) {
+            assertThat(todo).hasNoNullFieldsOrProperties();
+        }
     }
 
     @Test

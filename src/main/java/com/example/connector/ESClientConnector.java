@@ -57,27 +57,24 @@ public class ESClientConnector {
     }
 
     public List<Todo> getAll() {
-        return matchAll();
-//        return todos.values().stream().toList();
+//        return matchAll();
+        return todos.values().stream().toList();
     }
 
     public List<Todo> deleteAll() {
 
         Query matchAllQuery = new MatchAllQuery.Builder().build()._toQuery();
 
-        todos.clear();
-
-        CompletableFuture<Long> cf = elasticsearchAsyncClient.deleteByQuery(deleteReque -> deleteReque
+        CompletableFuture<DeleteByQueryResponse> cf = elasticsearchAsyncClient.deleteByQuery(deleteReque -> deleteReque
                 .index(indexName)
                 .query(matchAllQuery)
-                ).whenComplete((resp, exception) -> {
-                    if (exception != null) {
-                        // stub exception
-                    } else {
-                        // stub resp
-                    }
-                })
-                .thenApply(DeleteByQueryResponse::deleted);
+        ).whenComplete((resp, exception) -> {
+            if (exception != null) {
+                // stub exception
+            } else {
+                todos.clear();
+            }
+        }).toCompletableFuture();
 
         return todos.values().stream().toList();
     }
@@ -94,7 +91,6 @@ public class ESClientConnector {
                 // stub exception
             } else {
                 todos.remove(id);
-                // stub resp
             }
         });
 
@@ -126,7 +122,7 @@ public class ESClientConnector {
                 })
                 .thenApply(UpdateResponse::id);
 
-        Long id = Long.parseLong(cf.join());
+        Long id = Long.parseLong(cf.toCompletableFuture().join());
 
         return todos.get(id);
     }
@@ -165,11 +161,13 @@ public class ESClientConnector {
                     if (exception != null) {
                         // stub exception
                     } else {
-                        // stub resp
                     }
                 })
-                .join().hits().hits().stream()
-                .map(Hit::source).collect(Collectors.toList()
+                .toCompletableFuture().join()
+                .hits()
+                .hits().stream()
+                .map(Hit::source)
+                .collect(Collectors.toList()
                 );
     }
 
