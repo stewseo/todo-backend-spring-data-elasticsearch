@@ -31,11 +31,8 @@ public class TodoRestController {
     @Autowired
     private TodoServiceImpl service;
 
-    private static final Logger logger = LoggerFactory.getLogger("requestLogger");
-
     @PostMapping("/todos")
     public ResponseEntity<Todo> createTodo(@RequestBody Todo todo) {
-        logger.info("TodoRestController createTodo. passing todo as param and invoking service.createOrUpdate: " + todo);
         Todo storedTodo = service.createOrUpdate(todo);
         return new ResponseEntity<>(storedTodo, HttpStatus.OK);
     }

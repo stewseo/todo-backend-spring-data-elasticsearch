@@ -22,23 +22,21 @@ public class TodoServiceImpl implements TodoService<Todo, Long> {
     @Override
     public Todo createOrUpdate(Todo todo) {
 
-        long id = ThreadLocalRandom.current().nextLong(Long.MAX_VALUE);
-
-        setTodo(todo, id);
-
-        return esClientConnector.createOrUpdate(todo);
+        setTodo(todo);
+        esClientConnector.createOrUpdate(todo);
+        return todo;
 
     }
 
-    private void setTodo(Todo todo, Long id) {
+    private void setTodo(Todo todo) {
+        long id = ThreadLocalRandom.current().nextLong(Long.MAX_VALUE);
+        todo.setId(id);
+
         String url = API_BASE_URL + "/" + id;
-        if(id != null) {
-            todo.setId(id);
-        }
-        if(url != null) {
-            todo.setUrl(url);
-        }
+        todo.setUrl(url);
+
         todo.setCompleted(false);
+
         if(todo.getOrder() != null) {
             todo.setOrder(todo.getOrder());
         }

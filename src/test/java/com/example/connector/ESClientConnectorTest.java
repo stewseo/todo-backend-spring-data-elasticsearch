@@ -1,18 +1,19 @@
 package com.example.connector;
 
 import com.example.model.Todo;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.atomic.AtomicLong;
 
-import static com.example.test_vars.TestVars.ID;
-import static com.example.test_vars.TestVars.ORDER;
-import static com.example.test_vars.TestVars.TITLE;
 import static com.example.test_vars.TestVars.URL;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -22,85 +23,89 @@ class ESClientConnectorTest {
     @Autowired
     private ESClientConnector esClientConnector;
 
-    private List<Todo> todos;
+    private static final Logger logger = LoggerFactory.getLogger(ESClientConnectorTest.class);
 
+    private final AtomicLong docsCount = new AtomicLong();
+
+    private final int size = 10;
 
     @BeforeEach
     void beforeEach() {
 
-        todos = esClientConnector.getAll();
+        List<Long> list = ThreadLocalRandom.current().longs( 0 , 100000 ).limit(size).boxed().toList();
 
-        assertThat(todos.size()).isEqualTo(0);
-        assertThat(esClientConnector.docsCount()).isEqualTo(todos.size());
+        try {
 
-        for (Long id : List.of(1L, 2L, 3L)) {
-            System.out.println(id);
-            esClientConnector.createOrUpdate(new Todo(id, URL + "/" + id, "a todo", id.intValue(), false));
+            esClientConnector.deleteAll();
+
+            Thread.sleep(3000);
+
+            docsCount.set(esClientConnector.docsCount());
+
+            assertThat(docsCount.get()).isEqualTo(0);
+
+            for (Long id : list) {
+                esClientConnector.createOrUpdate(new Todo(id, URL + "/" + id, "a todo", id.intValue(), false));
+            }
+
+            Thread.sleep(3000);
+
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
         }
-
-        todos = esClientConnector.getAll();
-
-        assertThat(todos.size()).isEqualTo(3);
-        assertThat(esClientConnector.docsCount()).isEqualTo(todos.size());
-
-    }
-
-    @AfterEach
-    void afterEach() {
-        todos = esClientConnector.deleteAll();
-
-        assertThat(todos.size()).isEqualTo(0);
-        assertThat(esClientConnector.docsCount()).isEqualTo(todos.size());
     }
 
     @Test
     void testGetAll() {
-        for(Todo todo : todos) {
-            assertThat(todo).hasNoNullFieldsOrProperties();
-        }
+        List<Todo> todos = esClientConnector.getAll();
+        assertThat(todos.size()).isEqualTo(size);
+    }
+
+    @Test
+    void testDocsCount() {
+        long docsCount = esClientConnector.docsCount();
+        assertThat(docsCount).isEqualTo(size);
     }
 
     @Test
     void testGetById() {
-        assertThat(esClientConnector.getById(1L).toString()).isEqualTo("1");
-        assertThat(esClientConnector.getById(2L).toString()).isEqualTo("2");
-        assertThat(esClientConnector.getById(3L).toString()).isEqualTo("3");
-        assertThat(esClientConnector.getById(4L).toString()).isEqualTo("4");
-
-    }
-
-
-
-//        Todo actual = esClientConnector.createOrUpdate(todo);
-//        assertThat(esClientConnector.idExists(ID)).isTrue();
-
-//        assertThat(actual.getId()).isExactlyInstanceOf(Long.class);
-//        assertThat(actual.getTitle()).isEqualTo("http://expected-url.com:8080");
-//        Todo todo = esClientConnector.getAll(this.todo.getId());
-
-
-
-    @Test
-    void testDeleteAll() {
-//        Todo todo = esClientConnector.deleteAll(this.todo.getId());
+        List<Todo> todos = esClientConnector.getAll();
+        for (Todo todo : todos) {
+            long id = todo.getId();
+            assertThat(esClientConnector.getById(id)).hasNoNullFieldsOrProperties();
+        }
 
     }
 
     @Test
-    void deleteById() throws IOException {
-//        Todo todo = esClientConnector.deleteById(this.todo.getId());
+    void testDeleteById() throws IOException, InterruptedException {
+        List<Todo> todos = esClientConnector.getAll();
+        AtomicLong i = new AtomicLong(todos.size());
+
+        for (Todo todo : todos) {
+            esClientConnector.deleteById(todo.getId());
+            i.getAndDecrement();
+        }
+        Thread.sleep(5000);
+        assertThat(i.get()).isEqualTo(0);
+        assertThat(esClientConnector.docsCount()).isEqualTo(i.get());
 
     }
 
     @Test
     void testPatch() throws IOException {
-//        Todo actual = esClientConnector.patch(todo);
+        List<Todo> todos = esClientConnector.getAll();
+        for (Todo todo : todos) {
+            assertThat(todo.getTitle()).isEqualTo("a todo");
+            assertThat(todo.getCompleted()).isFalse();
 
-    }
+            todo.setTitle("updated todo");
+            todo.setCompleted(true);
 
-    @Test
-    void testUpdateByQuery() throws IOException {
-
+            Todo actual = esClientConnector.patch(todo);
+            assertThat(actual.getTitle()).isEqualTo("updated todo");
+            assertThat(actual.getCompleted()).isTrue();
+        }
 
     }
 }

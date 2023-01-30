@@ -2,7 +2,7 @@
 
 - Java 17.0.4 Adoptium Temurin 
 - Spring Data Elasticsearch 5.0.1
-- Spring Boot 2.7.4
+- Spring Boot 2.7.8
 - Gradle 7.6
 - Heroku CLI 7.53.0
 
@@ -25,7 +25,7 @@ heroku war:deploy libs/spring-data-elasticsearch-*.war --app spring-data-elastic
 <br/>
 
 ### [Real-time tail logs from a successful request](https://devcenter.heroku.com/articles/logging)
-```java
+```
 heroku logs --app spring-data-elasticsearch --tail
 
 ```
