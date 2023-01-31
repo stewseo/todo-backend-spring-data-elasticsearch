@@ -43,13 +43,6 @@ dependencies {
     implementation buildLibs.jakarta.json.bind
     implementation buildLibs.jakarta.json.processing
 
-//    implementation buildLibs.eclipse.parsson
-//
-//    testImplementation("org.eclipse:yasson:2.0.4") {
-//        // Exclude Glassfish as we use Parsson (basically Glassfish renamed in the Jakarta namespace).
-//        exclude(group: "org.glassfish", module: "jakarta.json")
-//    }
-
     compileOnly buildLibs.lombok
     annotationProcessor buildLibs.lombok
 

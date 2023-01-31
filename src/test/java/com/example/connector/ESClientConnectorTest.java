@@ -41,6 +41,7 @@ class ESClientConnectorTest {
             Thread.sleep(3000);
 
             docsCount.set(esClientConnector.docsCount());
+            System.out.println("docsCount: " + docsCount);
 
             assertThat(docsCount.get()).isEqualTo(0);
 
