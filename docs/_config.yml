@@ -1,0 +1,16 @@
+
+title: Todo-Backend implementation
+email: Stewart.S.Seo@gmail.com
+description: Todo-Backend implementation using Java 17, Spring Boot 2, Spring Data Elasticsearch 5, Gradle 7.6, Heroku CLI 7.53
+
+url: "https://stewseo.github.io"
+baseurl: "/todo-backend-spring-data-elasticsearch"
+github_username:  stewseo
+
+remote_theme: pmarsceill/just-the-docs
+
+color_scheme: dark
+
+plugins:
+  - github-pages
+  - jekyll-remote-theme

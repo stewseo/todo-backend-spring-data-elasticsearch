@@ -1,0 +1,58 @@
+plugins {
+    id "org.springframework.boot" version "2.7.4"
+    id 'io.spring.dependency-management' version '1.0.14.RELEASE'
+    id 'java'
+    id 'war'
+}
+
+group 'com.example'
+version '1.3.0-SNAPSHOT'
+
+apply plugin: 'war'
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+}
+
+bootWar {
+    destinationDirectory.set(file("$rootDir/libs"))
+    archiveBaseName.set('spring-data-elasticsearch')
+    archiveVersion.set(project.version)
+    manifest {
+        attributes 'Start-Class': 'com.example.TodoApplication'
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+
+    implementation buildLibs.spring.boot.gradle
+
+    implementation buildLibs.spring.boot.starter.web
+    implementation buildLibs.spring.boot.starter.parent
+
+    implementation buildLibs.spring.data.elasticsearch
+
+
+    implementation buildLibs.jackson.core
+
+    implementation buildLibs.jakarta.json.bind
+    implementation buildLibs.jakarta.json.processing
+
+    compileOnly buildLibs.lombok
+    annotationProcessor buildLibs.lombok
+
+    testCompileOnly buildLibs.lombok
+    testAnnotationProcessor buildLibs.lombok
+
+    testImplementation buildLibs.spring.boot.starter.test
+
+}
+
+test {
+    useJUnitPlatform()
+}

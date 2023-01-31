@@ -1,0 +1,35 @@
+
+# Ignore Gradle project-specific cache directory
+.gradle
+
+# Ignore Gradle build output directory
+.gradle
+/build/
+gradlew*
+!gradle-wrapper.jar
+
+*.jar
+*.bat
+*.txt
+
+.classpath
+.project
+.settings/
+
+*-cs-cleanup.xml
+*-cs-formatter.xml
+.checkstyle
+
+# intellij files
+build-idea/
+.idea/
+
+*.iml
+*.ipr
+*.iws
+*.gpg
+*.pub
+
+# These files are generated in the main tree by IntelliJ
+benchmarks/src/main/generated/*
+/model/*
