@@ -3,14 +3,11 @@ package com.example.connector;
 import com.example.model.Todo;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -23,10 +20,6 @@ class ESClientConnectorTest {
     @Autowired
     private ESClientConnector esClientConnector;
 
-    private static final Logger logger = LoggerFactory.getLogger(ESClientConnectorTest.class);
-
-    private final AtomicLong docsCount = new AtomicLong();
-
     private final int size = 10;
 
     @BeforeEach
@@ -38,18 +31,17 @@ class ESClientConnectorTest {
 
             esClientConnector.deleteAll();
 
-            Thread.sleep(3000);
+            Thread.sleep(4500);
 
-            docsCount.set(esClientConnector.docsCount());
-            System.out.println("docsCount: " + docsCount);
+            long docsCount = esClientConnector.docsCount();
 
-            assertThat(docsCount.get()).isEqualTo(0);
+            assertThat(docsCount).isEqualTo(0);
 
             for (Long id : list) {
                 esClientConnector.createOrUpdate(new Todo(id, URL + "/" + id, "a todo", id.intValue(), false));
             }
 
-            Thread.sleep(3000);
+            Thread.sleep(4500);
 
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
@@ -71,6 +63,9 @@ class ESClientConnectorTest {
     @Test
     void testGetById() {
         List<Todo> todos = esClientConnector.getAll();
+
+        assertThat(todos.size()).isEqualTo(size);
+
         for (Todo todo : todos) {
             long id = todo.getId();
             assertThat(esClientConnector.getById(id)).hasNoNullFieldsOrProperties();

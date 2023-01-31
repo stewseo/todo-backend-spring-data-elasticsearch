@@ -116,39 +116,36 @@ public class ESClientConnector {
     private CompletableFuture<String> updateByQuery(String docId, Todo todo) throws IOException {
 
         return elasticsearchAsyncClient.update(req -> req
-                                .index(indexName)
-                                .id(docId)
-                                .doc(todo)
-                        , Todo.class
-                ).whenComplete((resp, exception) -> {
-                    if (exception != null) {
-                        throw new RecordNotFoundException("Record Not Found Exception");
-                    } else {
-                    }
-                }).thenApply(UpdateResponse::id);
+                        .index(indexName)
+                        .id(docId)
+                        .doc(todo)
+                , Todo.class
+        ).whenComplete((resp, exception) -> {
+            if (exception != null) {
+                throw new RecordNotFoundException("Record Not Found Exception");
+            } else {
+            }
+        }).thenApply(UpdateResponse::id);
     }
 
     public boolean idExists(Long id) {
         return elasticsearchAsyncClient.exists(e -> e
-                .index(indexName)
-                .id(id.toString()) // parsing a Long from _id is equal to the corresponding todo's id
+                        .index(indexName)
+                        .id(id.toString())
                 )
                 .join().value();
     }
 
     public Long docsCount() {
 
-        String docsCount = elasticsearchAsyncClient.cat().indices(indicesReq -> indicesReq
+        IndicesRecord indicesRecord = elasticsearchAsyncClient.cat().indices(indicesReq -> indicesReq
                         .index(indexName)
                 )
                 .thenApply(IndicesResponse::valueBody)
                 .join()
-                .stream()
-                .map(IndicesRecord::docsCount)
-                .findAny()
-                .orElse("0");
+                .get(0);
 
-        return Long.parseLong(docsCount);
+        return Long.parseLong(indicesRecord.docsCount());
     }
 
     private Query matchQuery(String field, Long query) {
